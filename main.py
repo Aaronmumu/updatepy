@@ -24,15 +24,26 @@ class db:
     def update(self):
         dbconn = pymysql.connect(self.ip, self.user, self.pwd, self.db, self.port)
         f = open("db.txt", "r")
+        txt = ''
         if dbconn:
             cursor = dbconn.cursor()
             while True:
                 line = f.readline().strip('\n')  # 按行读取且处理掉换行符，效果:"\'\n'变为了''
                 if line:
-                    cursor.execute(line)
-                    print(line)
-                    dbconn.commit()
+                    txt += line
+                    # cursor.execute(line)
+                    # print(line)
+                    # dbconn.commit()
                 else:
+                    split = txt.strip().split('#end')
+                    print(split)
+                    for line in split:
+                        if line:
+                            print(line)
+                            cursor.execute(line)
+                            dbconn.commit()
+                        else:
+                            print('空行')
                     break
             cursor.execute("SELECT VERSION()")
             data = cursor.fetchone()
