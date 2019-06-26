@@ -22,35 +22,39 @@ class db:
         pass
 
     def update(self):
-        dbconn = pymysql.connect(self.ip, self.user, self.pwd, self.db, self.port)
-        f = open("db.txt", "r")
-        txt = ''
-        if dbconn:
-            cursor = dbconn.cursor()
-            while True:
-                line = f.readline().strip('\n')  # 按行读取且处理掉换行符，效果:"\'\n'变为了''
-                if line:
-                    txt += line
-                    # cursor.execute(line)
-                    # print(line)
-                    # dbconn.commit()
-                else:
-                    split = txt.strip().split('#end')
-                    print(split)
-                    for line in split:
-                        if line:
-                            print(line)
-                            cursor.execute(line)
-                            dbconn.commit()
-                        else:
-                            print('空行')
-                    break
-            cursor.execute("SELECT VERSION()")
-            data = cursor.fetchone()
-            print("Database version : %s " % data)
-            dbconn.close()
+        db_file = 'db.txt'
+        if os.path.exists(db_file):
+            dbconn = pymysql.connect(self.ip, self.user, self.pwd, self.db, self.port)
+            f = open(db_file, "r")
+            txt = ''
+            if dbconn:
+                cursor = dbconn.cursor()
+                while True:
+                    line = f.readline().strip('\n')  # 按行读取且处理掉换行符，效果:"\'\n'变为了''
+                    if line:
+                        txt += line
+                        # cursor.execute(line)
+                        # print(line)
+                        # dbconn.commit()
+                    else:
+                        split = txt.strip().split('#end')
+                        print(split)
+                        for line in split:
+                            if line:
+                                print(line)
+                                cursor.execute(line)
+                                dbconn.commit()
+                            else:
+                                print('空行')
+                        break
+                cursor.execute("SELECT VERSION()")
+                data = cursor.fetchone()
+                print("Database version : %s " % data)
+                dbconn.close()
+            else:
+                print("连接数据库失败")
         else:
-            print("连接数据库失败")
+            print("没有更新db")
 
 # 项目源码更新
 class project:
@@ -58,7 +62,7 @@ class project:
         pass
 
     def update(self, sourceDir, targetDir, backupDir):
-        print("更新代码部分")
+        print("更新代码部分start")
         # 重命名文件夹
         shutil.move(targetDir, backupDir)
         # 复制整个目录(备份)
@@ -67,6 +71,7 @@ class project:
         # sourceDir = "source"
         # targetDir = "target-01"
         # self.copyFiles(sourceDir, targetDir)
+        print("更新代码部分finish")
 
     def copyFiles(self, sourceDir, targetDir):
         if sourceDir.find(".svn") > 0:
@@ -224,26 +229,14 @@ if __name__ == '__main__':
         if 'q' == answer:
             flag = False
         elif 'h' == answer:
-
-            # dir = input("备份目录:")
-            # # 文件移动 需要推送到它机服务器
-            # sourceDir = 'source'
-            # targetDir = 'target'#PHP运行环境根目录
-            # backupDir = dir + 'backup_' + getCurTime()
-
-            # mac = {
-            #     shell(**{'ip': '192.168.3.45',  # ip
-            #              'port': 22,  # 端口
-            #              'user': 'root',  # 用户名
-            #              'pwd': '123456',  # 密码
-            #              'projects': [{
-            #                  'package': 'mhash.tar.gz',  # 包
-            #                  'souce_path': 'D:\www\pyth',  # 更新包的原始目录
-            #                  'path': ['/datapy/package'],  # 上传包路径
-            #                  'web_path': '/datapy/www',  # web目录路径
-            #                  'web_back_path': '/datapy/back',  # web备份目录路径
-            #              }]})
-            # }
+            # 更新数据库结构
+            db = db(**{'ip': '',  # ip
+                       'port': 3306,  # 端口
+                       'user': 'dev',  # 用户名
+                       'db': 'u3drunfast',  # 数据库
+                       'pwd': 'dev'  # 密码
+                       })
+            db.update()
 
             name = 'mhash-0.9.9.9'
             package = 'mhash.tar.gz'
@@ -270,7 +263,7 @@ if __name__ == '__main__':
                 shell(**{'ip': '',  # ip
                          'port': 22,  # 端口
                          'user': 'user_00',  # 用户名
-                         'pwd': '',  # 密码
+                         'pwd': 'kissnsms',  # 密码
                          'projects': [{
                              'name': name,  # 包
                              'package': package,  # 包
@@ -292,19 +285,32 @@ if __name__ == '__main__':
                 print(table, title)
             pass
         elif 'l' == answer:
-            dir = input("备份目录:")
             # 更新数据库结构
             db = db(**{'ip': '',  # ip
                        'port': 3306,  # 端口
                        'user': 'dev',  # 用户名
-                       'db': '',  # 数据库
+                       'db': 'u3drunfast',  # 数据库
                        'pwd': 'dev'  # 密码
                        })
             db.update()
+
             # 文件移动 本地或者更新到别的服务器
             sourceDir = 'source'
             targetDir = 'target'
-            backupDir = dir + 'backup_' + getCurTime()
+            backupDir = 'backup'
+
+            isourceDir = input("更新路径(默认: %s):" % sourceDir)
+            itargetDir = input("网站路径(默认: %s):" % targetDir)
+            ibackupDir = input("备份目录(默认: %s):" % backupDir)
+
+            if isourceDir:
+                sourceDir = isourceDir
+            if itargetDir:
+                targetDir = itargetDir
+            if ibackupDir:
+                backupDir = ibackupDir
+
+            backupDir += '_' + getCurTime()
 
             project = project()
             project.update(sourceDir, targetDir, backupDir)
